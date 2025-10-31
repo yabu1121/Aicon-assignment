@@ -13,7 +13,14 @@ type ItemUsecase interface {
 	GetItemByID(ctx context.Context, id int64) (*entity.Item, error)
 	CreateItem(ctx context.Context, input CreateItemInput) (*entity.Item, error)
 	DeleteItem(ctx context.Context, id int64) error
+	UpdateItem(ctx context.Context, id int64, input UpdateItemInput) (*entity.Item, error)
 	GetCategorySummary(ctx context.Context) (*CategorySummary, error)
+}
+
+type UpdateItemInput struct {
+	Name          *string `json:"name"`           
+	Brand         *string `json:"brand"`          
+	PurchasePrice *int    `json:"purchase_price"` 
 }
 
 type CreateItemInput struct {
@@ -104,6 +111,39 @@ func (u *itemUsecase) DeleteItem(ctx context.Context, id int64) error {
 	}
 
 	return nil
+}
+
+func (u *itemUsecase) UpdateItem(ctx context.Context, id int64, input UpdateItemInput) (*entity.Item, error) {
+	if id <= 0 {
+		return nil, domainErrors.ErrInvalidInput
+	}
+
+	if input.Name == nil && input.Brand == nil && input.PurchasePrice == nil {
+		return nil, fmt.Errorf("%w: at least one field (name, brand, purchase_price) must be provided", domainErrors.ErrInvalidInput)
+	}
+
+	existingItem, err := u.itemRepo.FindByID(ctx, id)
+	if err != nil {
+		if domainErrors.IsNotFoundError(err) {
+			return nil, domainErrors.ErrItemNotFound
+		}
+		return nil, fmt.Errorf("failed to retrieve item: %w", err)
+	}
+
+	err = existingItem.UpdatePartial(input.Name, input.Brand, input.PurchasePrice)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", domainErrors.ErrInvalidInput, err.Error())
+	}
+
+	updatedItem, err := u.itemRepo.Update(ctx, id, existingItem)
+	if err != nil {
+		if domainErrors.IsNotFoundError(err) {
+			return nil, domainErrors.ErrItemNotFound
+		}
+		return nil, fmt.Errorf("failed to update item: %w", err)
+	}
+
+	return updatedItem, nil
 }
 
 func (u *itemUsecase) GetCategorySummary(ctx context.Context) (*CategorySummary, error) {
