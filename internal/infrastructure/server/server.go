@@ -54,6 +54,7 @@ func (s *Server) Run(ctx context.Context) error {
 		itemsGroup.POST("", itemHandler.CreateItem)        // POST /items
 		itemsGroup.GET("/:id", itemHandler.GetItem)        // GET /items/{id}
 		itemsGroup.DELETE("/:id", itemHandler.DeleteItem)  // DELETE /items/{id}
+		itemsGroup.PATCH("/:id", itemHandler.UpdateItem)   // PATCH /items/{id}
 		itemsGroup.GET("/summary", itemHandler.GetSummary) // GET /items/summary (bonus)
 	}
 
