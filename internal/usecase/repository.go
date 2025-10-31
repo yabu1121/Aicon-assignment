@@ -20,6 +20,9 @@ type ItemRepository interface {
 	// Delete deletes an item by ID
 	Delete(ctx context.Context, id int64) error
 
+	// Update updates an existing item by ID
+	Update(ctx context.Context, id int64, item *entity.Item) (*entity.Item, error)
+
 	// GetSummaryByCategory returns item counts grouped by category (bonus feature)
 	GetSummaryByCategory(ctx context.Context) (map[string]int, error)
 }
